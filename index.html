@@ -1,73 +1,183 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <!-- Stable A-Frame -->
-    <script src="https://aframe.io/releases/1.4.2/aframe.min.js"></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <!-- Local aframe-ar -->
-    <script src="./aframe-ar-main/dist/aframe-ar.min.js"></script>
-    <title>MarkLess</title>
+<title>AR + VR Combined</title>
+
+<!-- A-Frame -->
+<script src="https://aframe.io/releases/1.4.2/aframe.min.js"></script>
+
+<!-- AR -->
+<script src="./aframe-ar-main/dist/aframe-ar.min.js"></script>
+
+<style>
+  #modeBtn {
+    position: fixed;
+    top: 20px;
+    left: 20px;
+    z-index: 999;
+    padding: 10px 15px;
+    background: black;
+    color: white;
+    border: none;
+    cursor: pointer;
+  }
+</style>
+
+<script>
+/* =========================
+   MODE SWITCH
+========================= */
+let mode = "VR";
+
+function toggleMode() {
+  mode = (mode === "VR") ? "AR" : "VR";
+  document.querySelector("#modeBtn").innerText = "Switch to " + (mode === "VR" ? "AR" : "VR");
+
+  document.querySelector("#vrScene").setAttribute("visible", mode === "VR");
+  document.querySelector("#arScene").setAttribute("visible", mode === "AR");
+}
+
+/* =========================
+   AR LOGIC
+========================= */
+function showMessage(message){
+  let hud = document.querySelector("#hud");
+  if(hud) hud.setAttribute('value', message);
+}
+
+AFRAME.registerComponent('ar-logic',{
+  tick : function(){
+    let cam = document.querySelector("#cam");
+    if(!cam) return;
+
+    let collision = cam.components.raycaster.getIntersection(this.el);
+    if(!collision) return;
+
+    let circle = document.querySelector("#circle");
+    circle.setAttribute('position', collision.point);
+  }
+});
+
+window.addEventListener('touchstart', function(){
+  if(mode !== "AR") return;
+
+  let box = document.querySelector("#box");
+  let circle = document.querySelector("#circle");
+  let pos = circle.getAttribute('position');
+
+  box.setAttribute('position', pos);
+});
+
+/* =========================
+   VR GAME LOGIC (SHORTENED)
+========================= */
+let opponentHealth = 100;
+let playerHealth = 100;
+let isBlocking = false;
+let isGameOver = false;
+
+function updateHUD() {
+  let hud = document.querySelector('#hudText');
+  if (!hud) return;
+
+  hud.setAttribute('value', isBlocking ? "BLOCKING" : "READY");
+}
+
+/* Movement */
+AFRAME.registerComponent('rig-wasd', {
+  init: function() {
+    this.keys = {};
+    window.addEventListener('keydown', e => this.keys[e.code] = true);
+    window.addEventListener('keyup', e => this.keys[e.code] = false);
+  },
+  tick: function() {
+    if (mode !== "VR") return;
+
+    const speed = 0.08;
+    let pos = this.el.getAttribute('position');
+
+    if (this.keys['KeyW']) pos.z -= speed;
+    if (this.keys['KeyS']) pos.z += speed;
+    if (this.keys['KeyA']) pos.x -= speed;
+    if (this.keys['KeyD']) pos.x += speed;
+
+    this.el.setAttribute('position', pos);
+  }
+});
+
+/* Attack */
+window.addEventListener("click", () => {
+  if(mode !== "VR") return;
+
+  opponentHealth -= 10;
+  if(opponentHealth <= 0){
+    document.querySelector("#hudText").setAttribute("value","VICTORY!");
+  }
+});
+
+</script>
 </head>
+
 <body>
-    <script>
-      function showMessage(message){
-        let hud = document.querySelector("#hud");
-        hud.setAttribute('value', message);
-      }
 
-        AFRAME.registerComponent('ar-logic',{
-            init: function(){
-                showMessage('ar-logic running');
-            },
-            tick : function(){
-              let cam = document.querySelector("#cam");
-              if(!cam){return;}
-              showMessage('cam detected');
-              let collision = cam.components.raycaster.getIntersection(this.el);
-              if(!collision){return;}
-              showMessage('Occured collision' + collision.point.x.toFixed(2) + " " + collision.point.z.toFixed(2));
-              let circle = document.querySelector("#circle");
-              circle.setAttribute('position', collision.point);
-            }
-        });
+<button id="modeBtn" onclick="toggleMode()">Switch to AR</button>
 
-        window.addEventListener('touchstart', function(){
-          let box = document.querySelector("#box");
-          let circle = document.querySelector("#circle");
-          let pos = circle.getAttribute('position');
+<a-scene>
 
-          box.setAttribute('position', pos);
-        });
+  <!-- =========================
+       VR SCENE
+  ========================= -->
+  <a-entity id="vrScene" visible="true">
 
-    </script>
+    <a-plane rotation="-90 0 0" width="20" height="20" color="#dcb87d"></a-plane>
+
+    <a-entity id="rig" position="0 1.6 3" rig-wasd>
+      <a-entity camera>
+        <a-text id="hudText"
+                value="READY"
+                position="-0.3 0.3 -1"
+                color="white">
+        </a-text>
+      </a-entity>
+    </a-entity>
+
+    <!-- Enemy -->
+    <a-box id="enemy" position="0 1 -3" color="red"></a-box>
+
+  </a-entity>
 
 
-    <a-scene ar ar-logic>
-        <a-camera id="cam" ar-raycaster raycaster="objects:none;">
-          <a-text id="hud" 
-            value="Summa Text" 
-            position="0 -0.1 -0.25"
-            align="center"
-            wrap-count="800"
-          ></a-text>
-        </a-camera>
-    
-        <a-ring
-          id="circle"
-          rotation="-90 0 0"
-          radius-inner="0.01"
-          radius-outer="0.02">
-        </a-ring>
-    
-        <!-- <a-box id="box" position="0 0 -1" color="red" scale="0.2 0.2 0.2"></a-box> -->
-        <a-gltf-model id="box"
-        src="model/itachi.glb"
-        scale="50 50 50"
-        position="0 0 0"
-      ></a-gltf-model>
-    
-    </a-scene>
+  <!-- =========================
+       AR SCENE
+  ========================= -->
+  <a-entity id="arScene" visible="false">
+
+    <a-camera id="cam" ar-raycaster raycaster="objects:none;">
+      <a-text id="hud"
+        value="Tap to place"
+        position="0 -0.2 -0.5"
+        align="center">
+      </a-text>
+    </a-camera>
+
+    <a-ring id="circle"
+      rotation="-90 0 0"
+      radius-inner="0.01"
+      radius-outer="0.02">
+    </a-ring>
+
+    <a-gltf-model id="box"
+      src="./model/tyrannosaurus_rex_skeleton.glb"
+      scale="50 50 50"
+      position="0 0 0">
+    </a-gltf-model>
+
+  </a-entity>
+
+</a-scene>
+
 </body>
 </html>

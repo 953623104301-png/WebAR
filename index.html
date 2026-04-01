@@ -1,98 +1,62 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    <!-- A-Frame -->
+    <script src="https://aframe.io/releases/1.4.2/aframe.min.js"></script>
 
-<title>AR + VR Itachi (Fixed)</title>
-
-<!-- A-Frame -->
-<script src="https://aframe.io/releases/1.4.2/aframe.min.js"></script>
-
-<!-- AR.js -->
-<script src="https://cdn.jsdelivr.net/gh/AR-js-org/AR.js/aframe/build/aframe-ar.js"></script>
-
-<style>
-  #modeBtn {
-    position: fixed;
-    top: 20px;
-    left: 20px;
-    z-index: 999;
-    padding: 10px 15px;
-    background: black;
-    color: white;
-    border: none;
-    font-size: 16px;
-  }
-</style>
-
-<script>
-let mode = "VR";
-
-function toggleMode() {
-  mode = (mode === "VR") ? "AR" : "VR";
-
-  document.getElementById("modeBtn").innerText =
-    "Switch to " + (mode === "VR" ? "AR" : "VR");
-
-  document.getElementById("vrScene").setAttribute("visible", mode === "VR");
-  document.getElementById("arScene").setAttribute("visible", mode === "AR");
-}
-</script>
+    <title>MarkLess VR</title>
 </head>
 
-<body style="margin:0; overflow:hidden;">
+<body>
 
-<button id="modeBtn" onclick="toggleMode()">Switch to AR</button>
+<a-scene>
 
-<a-scene
-  embedded
-  vr-mode-ui="enabled: true"
-  arjs="sourceType: webcam; debugUIEnabled: false;"
->
+    <!-- Camera + Cursor -->
+    <a-entity position="0 1.6 0">
+        <a-camera>
+            <!-- Cursor for interaction -->
+            <a-cursor 
+                color="white"
+                fuse="true"
+                fuse-timeout="1000">
+            </a-cursor>
 
-  <!-- LIGHT -->
-  <a-entity light="type: ambient; intensity: 1"></a-entity>
-  <a-entity light="type: directional; intensity: 1" position="1 2 1"></a-entity>
+            <!-- HUD Text -->
+            <a-text 
+                value="Welcome to VR World"
+                position="0 -0.5 -1"
+                align="center"
+                color="white">
+            </a-text>
+        </a-camera>
+    </a-entity>
 
-  <!-- ================= VR MODE ================= -->
-  <a-entity id="vrScene">
+    <!-- Sky (Environment) -->
+    <a-sky color="#111"></a-sky>
 
-    <!-- Camera -->
-    <a-entity camera look-controls position="0 1.6 3"></a-entity>
+    <!-- Lights -->
+    <a-light type="ambient" intensity="0.8"></a-light>
+    <a-light type="directional" position="2 4 2" intensity="1"></a-light>
 
     <!-- Ground -->
-    <a-plane rotation="-90 0 0" width="20" height="20" color="#dcb87d"></a-plane>
+    <a-plane 
+        rotation="-90 0 0" 
+        width="30" 
+        height="30"
+        color="#444">
+    </a-plane>
 
-    <!-- Itachi VR -->
-    <a-gltf-model 
-      src="model/itachi.glb"
-      position="0 0 -3"
-      scale="2 2 2"
-      rotation="0 180 0">
+    <!-- 3D Model -->
+    <a-gltf-model id="box"
+        src="./model/itachi.glb"
+        scale="0.5 0.5 0.5"
+        position="0 0 -3"
+        rotation="0 360 0"
+        animation="property: rotation; to: 90 360 0; loop: true; dur: 6000">
     </a-gltf-model>
-
-  </a-entity>
-
-  <!-- ================= AR MODE ================= -->
-  <a-entity id="arScene" visible="false">
-
-    <!-- Marker -->
-    <a-marker preset="hiro">
-
-      <!-- Itachi AR -->
-      <a-gltf-model 
-        src="model/itachi.glb"
-        position="0 0 0"
-        scale="0.5 0.5 0.5">
-      </a-gltf-model>
-
-    </a-marker>
-
-    <!-- AR Camera -->
-    <a-entity camera></a-entity>
-
-  </a-entity>
 
 </a-scene>
 
